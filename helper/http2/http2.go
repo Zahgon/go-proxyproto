@@ -3,15 +3,12 @@ package http2
 
 import (
 	"context"
-	"crypto/tls"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"sync"
 	"time"
 
-	"github.com/pires/go-proxyproto"
 	"golang.org/x/net/http2"
 )
 
@@ -41,172 +38,31 @@ type Server struct {
 // NewServer creates a new HTTP server.
 //
 // A nil h2 is equivalent to a zero http2.Server.
-func NewServer(h1 *http.Server, h2 *http2.Server) *Server {
-	if h2 == nil {
-		h2 = new(http2.Server)
-	}
-	srv := &Server{
-		h1:        h1,
-		h2:        h2,
-		h2Err:     http2.ConfigureServer(h1, h2),
-		listeners: make(map[net.Listener]struct{}),
-	}
-	srv.h1Listener = h1Listener{newPipeListener(), srv}
-	go func() {
-		// proxyListener.Accept never fails
-		_ = h1.Serve(srv.h1Listener)
-	}()
-	return srv
-}
+func NewServer(h1 *http.Server, h2 *http2.Server) *Server { _ = "STUB: not implemented"; return nil }
 
-func (srv *Server) errorLog() *log.Logger {
-	if srv.h1.ErrorLog != nil {
-		return srv.h1.ErrorLog
-	}
-	return log.Default()
-}
+// proxyListener.Accept never fails
+
+func (srv *Server) errorLog() *log.Logger { _ = "STUB: not implemented"; return nil }
 
 // Serve accepts incoming connections on the listener ln.
-func (srv *Server) Serve(ln net.Listener) error {
-	if srv.h2Err != nil {
-		return srv.h2Err
-	}
+func (srv *Server) Serve(ln net.Listener) error { _ = "STUB: not implemented"; return nil }
 
-	srv.mu.Lock()
-	ok := !srv.closed
-	if ok {
-		srv.listeners[ln] = struct{}{}
-	}
-	srv.mu.Unlock()
-	if !ok {
-		return http.ErrServerClosed
-	}
-
-	defer func() {
-		srv.mu.Lock()
-		delete(srv.listeners, ln)
-		srv.mu.Unlock()
-	}()
-
-	// net.Listener.Accept can fail for temporary failures, e.g. too many open
-	// files or other timeout conditions. In that case, wait and retry later.
-	// This mirrors what the net/http package does.
-	var delay time.Duration
-	for {
-		conn, err := ln.Accept()
-		if ne, ok := err.(net.Error); ok && ne.Timeout() {
-			if delay == 0 {
-				delay = listenerRetryBaseDelay
-			} else {
-				delay *= 2
-			}
-			if maxDelay := 1 * time.Second; delay > maxDelay {
-				delay = maxDelay
-			}
-			srv.errorLog().Printf("listener %q: accept error (retrying in %v): %v", ln.Addr(), delay, err)
-			time.Sleep(delay)
-		} else if err != nil {
-			if srv.isClosed() {
-				return http.ErrServerClosed
-			}
-			return fmt.Errorf("failed to accept connection: %w", err)
-		}
-
-		delay = 0
-
-		baseCtx := context.Background()
-		if srv.h1.BaseContext != nil {
-			baseCtx = srv.h1.BaseContext(ln)
-		}
-
-		go func(baseCtx context.Context, conn net.Conn) {
-			if err := srv.serveConn(baseCtx, conn); err != nil {
-				srv.errorLog().Printf("listener %q: %v", ln.Addr(), err)
-			}
-		}(baseCtx, conn)
-	}
-}
+// net.Listener.Accept can fail for temporary failures, e.g. too many open
+// files or other timeout conditions. In that case, wait and retry later.
+// This mirrors what the net/http package does.
 
 func (srv *Server) serveConn(baseCtx context.Context, conn net.Conn) error {
-	var proto string
-	switch conn := conn.(type) {
-	case *tls.Conn:
-		if err := conn.Handshake(); err != nil {
-			if closeErr := conn.Close(); closeErr != nil {
-				srv.errorLog().Printf("failed to close connection: %v", closeErr)
-			}
-			return err
-		}
-		proto = conn.ConnectionState().NegotiatedProtocol
-	case *proxyproto.Conn:
-		if proxyHeader := conn.ProxyHeader(); proxyHeader != nil {
-			tlvs, err := proxyHeader.TLVs()
-			if err != nil {
-				if closeErr := conn.Close(); closeErr != nil {
-					srv.errorLog().Printf("failed to close connection: %v", closeErr)
-				}
-				return err
-			}
-			for _, tlv := range tlvs {
-				if tlv.Type == proxyproto.PP2_TYPE_ALPN {
-					proto = string(tlv.Value)
-					break
-				}
-			}
-		}
-	}
-
-	// See https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids
-	switch proto {
-	case http2.NextProtoTLS, "h2c":
-		defer func() {
-			if closeErr := conn.Close(); closeErr != nil {
-				srv.errorLog().Printf("failed to close connection: %v", closeErr)
-			}
-		}()
-
-		ctx := baseCtx
-		// Mirror net/http.Server ConnContext behavior.
-		if cc := srv.h1.ConnContext; cc != nil {
-			ctx = cc(ctx, conn)
-			if ctx == nil {
-				panic("ConnContext returned nil")
-			}
-		}
-
-		opts := http2.ServeConnOpts{Context: ctx, BaseConfig: srv.h1}
-		srv.h2.ServeConn(conn, &opts)
-		return nil
-	case "", "http/1.0", "http/1.1":
-		return srv.h1Listener.ServeConn(conn)
-	default:
-		if closeErr := conn.Close(); closeErr != nil {
-			srv.errorLog().Printf("failed to close connection: %v", closeErr)
-		}
-		return fmt.Errorf("unsupported protocol %q", proto)
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
-func (srv *Server) closeListeners() error {
-	srv.mu.Lock()
-	defer srv.mu.Unlock()
+// See https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids
 
-	srv.closed = true
+// Mirror net/http.Server ConnContext behavior.
 
-	var err error
-	for ln := range srv.listeners {
-		if cerr := ln.Close(); cerr != nil {
-			err = cerr
-		}
-	}
-	return err
-}
+func (srv *Server) closeListeners() error { _ = "STUB: not implemented"; return nil }
 
-func (srv *Server) isClosed() bool {
-	srv.mu.Lock()
-	defer srv.mu.Unlock()
-	return srv.closed
-}
+func (srv *Server) isClosed() bool { _ = "STUB: not implemented"; return false }
 
 // h1Listener is used to signal back http.Server's Close and Shutdown to the
 // HTTP/2 server.
@@ -216,7 +72,7 @@ type h1Listener struct {
 }
 
 func (ln h1Listener) Close() error {
+	_ = "STUB: not implemented"
 	// pipeListener.Close never fails
-	_ = ln.pipeListener.Close()
-	return ln.srv.closeListeners()
+	return nil
 }

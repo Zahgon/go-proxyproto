@@ -21,28 +21,13 @@ const (
 var vpceRe = regexp.MustCompile("^[A-Za-z0-9-]*$")
 
 // IsAWSVPCEndpointID reports whether tlv contains an AWS VPC endpoint ID.
-func IsAWSVPCEndpointID(tlv proxyproto.TLV) bool {
-	return tlv.Type == PP2_TYPE_AWS && len(tlv.Value) > 0 && tlv.Value[0] == PP2_SUBTYPE_AWS_VPCE_ID
-}
+func IsAWSVPCEndpointID(tlv proxyproto.TLV) bool { _ = "STUB: not implemented"; return false }
 
 // AWSVPCEndpointID returns the AWS VPC endpoint ID if present.
 func AWSVPCEndpointID(tlv proxyproto.TLV) (string, error) {
-	if !IsAWSVPCEndpointID(tlv) {
-		return "", proxyproto.ErrIncompatibleTLV
-	}
-	vpce := string(tlv.Value[1:])
-	if !vpceRe.MatchString(vpce) {
-		return "", proxyproto.ErrMalformedTLV
-	}
-	return vpce, nil
+	_ = "STUB: not implemented"
+	return "", nil
 }
 
 // FindAWSVPCEndpointID returns the first AWS VPC ID in the TLV if it exists and is well-formed.
-func FindAWSVPCEndpointID(tlvs []proxyproto.TLV) string {
-	for _, tlv := range tlvs {
-		if vpc, err := AWSVPCEndpointID(tlv); err == nil && vpc != "" {
-			return vpc
-		}
-	}
-	return ""
-}
+func FindAWSVPCEndpointID(tlvs []proxyproto.TLV) string { _ = "STUB: not implemented"; return "" }

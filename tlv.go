@@ -4,10 +4,7 @@
 package proxyproto
 
 import (
-	"encoding/binary"
 	"errors"
-	"fmt"
-	"math"
 )
 
 // TLV type constants defined by the PROXY protocol spec.
@@ -59,86 +56,29 @@ type TLV struct {
 }
 
 // SplitTLVs splits the Type-Length-Value vector, returns the vector or an error.
-func SplitTLVs(raw []byte) ([]TLV, error) {
-	var tlvs []TLV
-	for i := 0; i < len(raw); {
-		tlv := TLV{
-			Type: PP2Type(raw[i]),
-		}
-		if len(raw)-i <= 2 {
-			return nil, ErrTruncatedTLV
-		}
-		tlvLen := int(binary.BigEndian.Uint16(raw[i+1 : i+3])) // Max length = 65K
-		i += 3
-		if i+tlvLen > len(raw) {
-			return nil, ErrTruncatedTLV
-		}
-		// Ignore no-op padding
-		if tlv.Type != PP2_TYPE_NOOP {
-			tlv.Value = make([]byte, tlvLen)
-			copy(tlv.Value, raw[i:i+tlvLen])
-		}
-		i += tlvLen
-		tlvs = append(tlvs, tlv)
-	}
-	return tlvs, nil
-}
+func SplitTLVs(raw []byte) ([]TLV, error) { _ = "STUB: not implemented"; return nil, nil }
+
+// Max length = 65K
+
+// Ignore no-op padding
 
 // JoinTLVs joins multiple Type-Length-Value records.
-func JoinTLVs(tlvs []TLV) ([]byte, error) {
-	var raw []byte
-	for _, tlv := range tlvs {
-		if len(tlv.Value) > math.MaxUint16 {
-			return nil, fmt.Errorf("proxyproto: cannot format TLV %v with length %d", tlv.Type, len(tlv.Value))
-		}
-		var length [2]byte
-		//nolint:gosec // lengthValue is validated above.
-		lengthValue := uint16(len(tlv.Value))
-		binary.BigEndian.PutUint16(length[:], lengthValue)
-		raw = append(raw, byte(tlv.Type))
-		raw = append(raw, length[:]...)
-		raw = append(raw, tlv.Value...)
-	}
-	return raw, nil
-}
+func JoinTLVs(tlvs []TLV) ([]byte, error) { _ = "STUB: not implemented"; return nil, nil }
+
+//nolint:gosec // lengthValue is validated above.
 
 // Registered is true if the type is registered in the spec, see section 2.2.
-func (p PP2Type) Registered() bool {
-	switch p {
-	case PP2_TYPE_ALPN,
-		PP2_TYPE_AUTHORITY,
-		PP2_TYPE_CRC32C,
-		PP2_TYPE_NOOP,
-		PP2_TYPE_UNIQUE_ID,
-		PP2_TYPE_SSL,
-		PP2_SUBTYPE_SSL_VERSION,
-		PP2_SUBTYPE_SSL_CN,
-		PP2_SUBTYPE_SSL_CIPHER,
-		PP2_SUBTYPE_SSL_SIG_ALG,
-		PP2_SUBTYPE_SSL_KEY_ALG,
-		PP2_TYPE_NETNS:
-		return true
-	}
-	return false
-}
+func (p PP2Type) Registered() bool { _ = "STUB: not implemented"; return false }
 
 // App is true if the type is reserved for application specific data, see section 2.2.7.
-func (p PP2Type) App() bool {
-	return p >= PP2_TYPE_MIN_CUSTOM && p <= PP2_TYPE_MAX_CUSTOM
-}
+func (p PP2Type) App() bool { _ = "STUB: not implemented"; return false }
 
 // Experiment is true if the type is reserved for temporary experimental use by application
 // developers, see section 2.2.7.
-func (p PP2Type) Experiment() bool {
-	return p >= PP2_TYPE_MIN_EXPERIMENT && p <= PP2_TYPE_MAX_EXPERIMENT
-}
+func (p PP2Type) Experiment() bool { _ = "STUB: not implemented"; return false }
 
 // Future is true is the type is reserved for future use, see section 2.2.7.
-func (p PP2Type) Future() bool {
-	return p >= PP2_TYPE_MIN_FUTURE
-}
+func (p PP2Type) Future() bool { _ = "STUB: not implemented"; return false }
 
 // Spec is true if the type is covered by the spec, see section 2.2 and 2.2.7.
-func (p PP2Type) Spec() bool {
-	return p.Registered() || p.App() || p.Experiment() || p.Future()
-}
+func (p PP2Type) Spec() bool { _ = "STUB: not implemented"; return false }

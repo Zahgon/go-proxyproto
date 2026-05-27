@@ -1,9 +1,7 @@
 package proxyproto
 
 import (
-	"fmt"
 	"net"
-	"strings"
 )
 
 // PolicyFunc can be used to decide whether to trust the PROXY info from
@@ -60,18 +58,8 @@ const (
 // Kubernetes pods local traffic. The def is a policy to use when an upstream
 // address doesn't match the skipHeaderCIDR.
 func ConnSkipProxyHeaderForCIDR(skipHeaderCIDR *net.IPNet, def Policy) ConnPolicyFunc {
-	return func(connOpts ConnPolicyOptions) (Policy, error) {
-		ip, err := ipFromAddr(connOpts.Upstream)
-		if err != nil {
-			return def, err
-		}
-
-		if skipHeaderCIDR != nil && skipHeaderCIDR.Contains(ip) {
-			return SKIP, nil
-		}
-
-		return def, nil
-	}
+	_ = "STUB: not implemented"
+	return *new(ConnPolicyFunc)
 }
 
 // SkipProxyHeaderForCIDR returns a PolicyFunc which can be used to accept a
@@ -81,18 +69,12 @@ func ConnSkipProxyHeaderForCIDR(skipHeaderCIDR *net.IPNet, def Policy) ConnPolic
 //
 // Deprecated: use ConnSkipProxyHeaderForCIDR instead.
 func SkipProxyHeaderForCIDR(skipHeaderCIDR *net.IPNet, def Policy) PolicyFunc {
-	connPolicy := ConnSkipProxyHeaderForCIDR(skipHeaderCIDR, def)
-	return func(upstream net.Addr) (Policy, error) {
-		return connPolicy(ConnPolicyOptions{Upstream: upstream})
-	}
+	_ = "STUB: not implemented"
+	return *new(PolicyFunc)
 }
 
 // WithPolicy adds given policy to a connection when passed as option to NewConn().
-func WithPolicy(p Policy) func(*Conn) {
-	return func(c *Conn) {
-		c.ProxyHeaderPolicy = p
-	}
-}
+func WithPolicy(p Policy) func(*Conn) { _ = "STUB: not implemented"; return nil }
 
 // ConnLaxWhiteListPolicy returns a ConnPolicyFunc which decides whether the
 // upstream ip is allowed to send a proxy header based on a list of allowed
@@ -100,12 +82,8 @@ func WithPolicy(p Policy) func(*Conn) {
 // header will be ignored. If one of the provided IP addresses or IP ranges
 // is invalid it will return an error instead of a ConnPolicyFunc.
 func ConnLaxWhiteListPolicy(allowed []string) (ConnPolicyFunc, error) {
-	allowFrom, err := parse(allowed)
-	if err != nil {
-		return nil, err
-	}
-
-	return connWhitelistPolicy(allowFrom, IGNORE), nil
+	_ = "STUB: not implemented"
+	return *new(ConnPolicyFunc), nil
 }
 
 // LaxWhiteListPolicy returns a PolicyFunc which decides whether the
@@ -116,25 +94,15 @@ func ConnLaxWhiteListPolicy(allowed []string) (ConnPolicyFunc, error) {
 //
 // Deprecated: use ConnLaxWhiteListPolicy instead.
 func LaxWhiteListPolicy(allowed []string) (PolicyFunc, error) {
-	connPolicy, err := ConnLaxWhiteListPolicy(allowed)
-	if err != nil {
-		return nil, err
-	}
-
-	return func(upstream net.Addr) (Policy, error) {
-		return connPolicy(ConnPolicyOptions{Upstream: upstream})
-	}, nil
+	_ = "STUB: not implemented"
+	return *new(PolicyFunc), nil
 }
 
 // ConnMustLaxWhiteListPolicy returns a ConnLaxWhiteListPolicy but will panic
 // if one of the provided IP addresses or IP ranges is invalid.
 func ConnMustLaxWhiteListPolicy(allowed []string) ConnPolicyFunc {
-	pfunc, err := ConnLaxWhiteListPolicy(allowed)
-	if err != nil {
-		panic(err)
-	}
-
-	return pfunc
+	_ = "STUB: not implemented"
+	return *new(ConnPolicyFunc)
 }
 
 // MustLaxWhiteListPolicy returns a LaxWhiteListPolicy but will panic if one
@@ -142,10 +110,8 @@ func ConnMustLaxWhiteListPolicy(allowed []string) ConnPolicyFunc {
 //
 // Deprecated: use ConnMustLaxWhiteListPolicy instead.
 func MustLaxWhiteListPolicy(allowed []string) PolicyFunc {
-	connPolicy := ConnMustLaxWhiteListPolicy(allowed)
-	return func(upstream net.Addr) (Policy, error) {
-		return connPolicy(ConnPolicyOptions{Upstream: upstream})
-	}
+	_ = "STUB: not implemented"
+	return *new(PolicyFunc)
 }
 
 // ConnStrictWhiteListPolicy returns a ConnPolicyFunc which decides whether the
@@ -156,12 +122,8 @@ func MustLaxWhiteListPolicy(allowed []string) PolicyFunc {
 // handle that case properly. If one of the provided IP addresses or IP
 // ranges is invalid it will return an error instead of a ConnPolicyFunc.
 func ConnStrictWhiteListPolicy(allowed []string) (ConnPolicyFunc, error) {
-	allowFrom, err := parse(allowed)
-	if err != nil {
-		return nil, err
-	}
-
-	return connWhitelistPolicy(allowFrom, REJECT), nil
+	_ = "STUB: not implemented"
+	return *new(ConnPolicyFunc), nil
 }
 
 // StrictWhiteListPolicy returns a PolicyFunc which decides whether the
@@ -174,25 +136,15 @@ func ConnStrictWhiteListPolicy(allowed []string) (ConnPolicyFunc, error) {
 //
 // Deprecated: use ConnStrictWhiteListPolicy instead.
 func StrictWhiteListPolicy(allowed []string) (PolicyFunc, error) {
-	connPolicy, err := ConnStrictWhiteListPolicy(allowed)
-	if err != nil {
-		return nil, err
-	}
-
-	return func(upstream net.Addr) (Policy, error) {
-		return connPolicy(ConnPolicyOptions{Upstream: upstream})
-	}, nil
+	_ = "STUB: not implemented"
+	return *new(PolicyFunc), nil
 }
 
 // ConnMustStrictWhiteListPolicy returns a ConnStrictWhiteListPolicy but will panic
 // if one of the provided IP addresses or IP ranges is invalid.
 func ConnMustStrictWhiteListPolicy(allowed []string) ConnPolicyFunc {
-	pfunc, err := ConnStrictWhiteListPolicy(allowed)
-	if err != nil {
-		panic(err)
-	}
-
-	return pfunc
+	_ = "STUB: not implemented"
+	return *new(ConnPolicyFunc)
 }
 
 // MustStrictWhiteListPolicy returns a StrictWhiteListPolicy but will panic
@@ -200,65 +152,25 @@ func ConnMustStrictWhiteListPolicy(allowed []string) ConnPolicyFunc {
 //
 // Deprecated: use ConnMustStrictWhiteListPolicy instead.
 func MustStrictWhiteListPolicy(allowed []string) PolicyFunc {
-	connPolicy := ConnMustStrictWhiteListPolicy(allowed)
-	return func(upstream net.Addr) (Policy, error) {
-		return connPolicy(ConnPolicyOptions{Upstream: upstream})
-	}
+	_ = "STUB: not implemented"
+	return *new(PolicyFunc)
 }
 
 func connWhitelistPolicy(allowed []func(net.IP) bool, def Policy) ConnPolicyFunc {
-	return func(connOpts ConnPolicyOptions) (Policy, error) {
-		upstreamIP, err := ipFromAddr(connOpts.Upstream)
-		if err != nil {
-			// something is wrong with the source IP, better reject the connection
-			return REJECT, err
-		}
-
-		for _, allowFrom := range allowed {
-			if allowFrom(upstreamIP) {
-				return USE, nil
-			}
-		}
-
-		return def, nil
-	}
+	_ = "STUB: not implemented"
+	return *new(ConnPolicyFunc)
 }
 
+// something is wrong with the source IP, better reject the connection
+
 func parse(allowed []string) ([]func(net.IP) bool, error) {
-	a := make([]func(net.IP) bool, len(allowed))
-	for i, allowFrom := range allowed {
-		if strings.LastIndex(allowFrom, "/") > 0 {
-			_, ipRange, err := net.ParseCIDR(allowFrom)
-			if err != nil {
-				return nil, fmt.Errorf("proxyproto: given string %q is not a valid IP range: %v", allowFrom, err)
-			}
-
-			a[i] = ipRange.Contains
-		} else {
-			allowed := net.ParseIP(allowFrom)
-			if allowed == nil {
-				return nil, fmt.Errorf("proxyproto: given string %q is not a valid IP address", allowFrom)
-			}
-
-			a[i] = allowed.Equal
-		}
-	}
-
-	return a, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 func ipFromAddr(upstream net.Addr) (net.IP, error) {
-	upstreamString, _, err := net.SplitHostPort(upstream.String())
-	if err != nil {
-		return nil, err
-	}
-
-	upstreamIP := net.ParseIP(upstreamString)
-	if nil == upstreamIP {
-		return nil, fmt.Errorf("proxyproto: invalid IP address")
-	}
-
-	return upstreamIP, nil
+	_ = "STUB: not implemented"
+	return *new(net.IP), nil
 }
 
 // TrustProxyHeaderFrom returns a ConnPolicyFunc which can be used to decide
@@ -266,20 +178,8 @@ func ipFromAddr(upstream net.Addr) (net.IP, error) {
 // connection. This policy ensures that only trusted sources can set the PROXY
 // header. Connections from IPs not in the trusted list will be rejected.
 func TrustProxyHeaderFrom(trustedIPs ...net.IP) ConnPolicyFunc {
-	return func(connOpts ConnPolicyOptions) (Policy, error) {
-		ip, err := ipFromAddr(connOpts.Upstream)
-		if err != nil {
-			return REJECT, err
-		}
-
-		for _, trustedIP := range trustedIPs {
-			if trustedIP.Equal(ip) {
-				return USE, nil
-			}
-		}
-
-		return REJECT, nil
-	}
+	_ = "STUB: not implemented"
+	return *new(ConnPolicyFunc)
 }
 
 // IgnoreProxyHeaderNotOnInterface returns a ConnPolicyFunc which can be used to
@@ -287,16 +187,6 @@ func TrustProxyHeaderFrom(trustedIPs ...net.IP) ConnPolicyFunc {
 // being made on specific interfaces. This policy can be used when the server
 // is bound to multiple interfaces but wants to allow on one or more interfaces.
 func IgnoreProxyHeaderNotOnInterface(allowedIP net.IP) ConnPolicyFunc {
-	return func(connOpts ConnPolicyOptions) (Policy, error) {
-		ip, err := ipFromAddr(connOpts.Downstream)
-		if err != nil {
-			return REJECT, err
-		}
-
-		if allowedIP.Equal(ip) {
-			return USE, nil
-		}
-
-		return IGNORE, nil
-	}
+	_ = "STUB: not implemented"
+	return *new(ConnPolicyFunc)
 }

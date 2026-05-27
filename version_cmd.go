@@ -21,28 +21,17 @@ var supportedCommand = map[ProtocolVersionAndCommand]bool{
 
 // IsLocal returns true if the command in v2 is LOCAL or the transport in v1 is UNKNOWN,
 // i.e. when no address information is expected, false otherwise.
-func (pvc ProtocolVersionAndCommand) IsLocal() bool {
-	return LOCAL == pvc
-}
+func (pvc ProtocolVersionAndCommand) IsLocal() bool { _ = "STUB: not implemented"; return false }
 
 // IsProxy returns true if the command in v2 is PROXY or the transport in v1 is not UNKNOWN,
 // i.e. when valid local/remote address and port information is expected, false otherwise.
-func (pvc ProtocolVersionAndCommand) IsProxy() bool {
-	return PROXY == pvc
-}
+func (pvc ProtocolVersionAndCommand) IsProxy() bool { _ = "STUB: not implemented"; return false }
 
 // IsUnspec returns true if the command is unspecified, false otherwise.
 func (pvc ProtocolVersionAndCommand) IsUnspec() bool {
+	_ = "STUB: not implemented"
 	// Must be LOCAL or PROXY.
-	return !pvc.IsLocal() && !pvc.IsProxy()
+	return false
 }
 
-func (pvc ProtocolVersionAndCommand) toByte() byte {
-	if pvc.IsLocal() {
-		return byte(LOCAL)
-	} else if pvc.IsProxy() {
-		return byte(PROXY)
-	}
-
-	return byte(LOCAL)
-}
+func (pvc ProtocolVersionAndCommand) toByte() byte { _ = "STUB: not implemented"; return 0 }

@@ -13,55 +13,23 @@ type pipeListener struct {
 	mu     sync.Mutex
 }
 
-func newPipeListener() *pipeListener {
-	return &pipeListener{
-		ch: make(chan net.Conn, 64),
-	}
-}
+func newPipeListener() *pipeListener { _ = "STUB: not implemented"; return nil }
 
 func (ln *pipeListener) Accept() (net.Conn, error) {
-	conn, ok := <-ln.ch
-	if !ok {
-		return nil, net.ErrClosed
-	}
-	return conn, nil
+	_ = "STUB: not implemented"
+	return *new(net.Conn), nil
 }
 
-func (ln *pipeListener) Close() error {
-	ln.mu.Lock()
-	defer ln.mu.Unlock()
-
-	if ln.closed {
-		return net.ErrClosed
-	}
-	ln.closed = true
-	close(ln.ch)
-	return nil
-}
+func (ln *pipeListener) Close() error { _ = "STUB: not implemented"; return nil }
 
 // ServeConn enqueues a new connection. The connection will be returned in the
 // next Accept call.
-func (ln *pipeListener) ServeConn(conn net.Conn) error {
-	ln.mu.Lock()
-	defer ln.mu.Unlock()
+func (ln *pipeListener) ServeConn(conn net.Conn) error { _ = "STUB: not implemented"; return nil }
 
-	if ln.closed {
-		return net.ErrClosed
-	}
-	ln.ch <- conn
-	return nil
-}
-
-func (ln *pipeListener) Addr() net.Addr {
-	return pipeAddr{}
-}
+func (ln *pipeListener) Addr() net.Addr { _ = "STUB: not implemented"; return *new(net.Addr) }
 
 type pipeAddr struct{}
 
-func (pipeAddr) Network() string {
-	return "pipe"
-}
+func (pipeAddr) Network() string { _ = "STUB: not implemented"; return "" }
 
-func (pipeAddr) String() string {
-	return "pipe"
-}
+func (pipeAddr) String() string { _ = "STUB: not implemented"; return "" }

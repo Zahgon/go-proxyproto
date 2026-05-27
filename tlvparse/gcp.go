@@ -1,8 +1,6 @@
 package tlvparse
 
 import (
-	"encoding/binary"
-
 	"github.com/pires/go-proxyproto"
 )
 
@@ -15,11 +13,7 @@ const (
 // ExtractPSCConnectionID returns the first PSC Connection ID in the TLV if it exists and is well-formed and
 // a bool indicating one was found.
 func ExtractPSCConnectionID(tlvs []proxyproto.TLV) (uint64, bool) {
-	for _, tlv := range tlvs {
-		if linkID, err := pscConnectionID(tlv); err == nil {
-			return linkID, true
-		}
-	}
+	_ = "STUB: not implemented"
 	return 0, false
 }
 
@@ -35,14 +29,6 @@ func ExtractPSCConnectionID(tlvs []proxyproto.TLV) (uint64, bool) {
 // will be decoded as 18446744072646845442.
 //
 // See https://cloud.google.com/vpc/docs/configure-private-service-connect-producer
-func pscConnectionID(t proxyproto.TLV) (uint64, error) {
-	if !isPSCConnectionID(t) {
-		return 0, proxyproto.ErrIncompatibleTLV
-	}
-	linkID := binary.BigEndian.Uint64(t.Value)
-	return linkID, nil
-}
+func pscConnectionID(t proxyproto.TLV) (uint64, error) { _ = "STUB: not implemented"; return 0, nil }
 
-func isPSCConnectionID(t proxyproto.TLV) bool {
-	return t.Type == PP2_TYPE_GCP && len(t.Value) == 8
-}
+func isPSCConnectionID(t proxyproto.TLV) bool { _ = "STUB: not implemented"; return false }

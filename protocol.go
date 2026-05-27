@@ -2,7 +2,6 @@ package proxyproto
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -81,189 +80,97 @@ type Conn struct {
 type Validator func(*Header) error
 
 // ValidateHeader adds given validator for proxy headers to a connection when passed as option to NewConn().
-func ValidateHeader(v Validator) func(*Conn) {
-	return func(c *Conn) {
-		if v != nil {
-			c.Validate = v
-		}
-	}
-}
+func ValidateHeader(v Validator) func(*Conn) { _ = "STUB: not implemented"; return nil }
 
 // SetReadHeaderTimeout sets the readHeaderTimeout for a connection when passed as option to NewConn().
-func SetReadHeaderTimeout(t time.Duration) func(*Conn) {
-	return func(c *Conn) {
-		if t >= 0 {
-			c.readHeaderTimeout = t
-		}
-	}
-}
+func SetReadHeaderTimeout(t time.Duration) func(*Conn) { _ = "STUB: not implemented"; return nil }
 
 // WithBufferSize sets the size of the read buffer used for proxy header detection.
 // Values <= 0 are ignored and the default (256 bytes) is used. Values < 16 are
 // effectively 16 due to bufio's minimum. The default is tuned for typical proxy
 // protocol header lengths.
-func WithBufferSize(length int) func(*Conn) {
-	return func(c *Conn) {
-		if length <= 0 {
-			return
-		}
-		p := new(int)
-		*p = length
-		c.bufferSize = p
-		c.bufReader = bufio.NewReaderSize(c.conn, length)
-	}
-}
+func WithBufferSize(length int) func(*Conn) { _ = "STUB: not implemented"; return nil }
 
 // Accept waits for and returns the next valid connection to the listener.
 func (p *Listener) Accept() (net.Conn, error) {
-	for {
-		// Get the underlying connection.
-		conn, err := p.Listener.Accept()
-		if err != nil {
-			return nil, err
-		}
+	_ = "STUB: not implemented"
 
-		proxyHeaderPolicy := USE
-		if p.Policy != nil && p.ConnPolicy != nil {
-			panic("only one of policy or connpolicy must be provided.")
-		}
-		if p.Policy != nil || p.ConnPolicy != nil {
-			if p.Policy != nil {
-				proxyHeaderPolicy, err = p.Policy(conn.RemoteAddr())
-			} else {
-				proxyHeaderPolicy, err = p.ConnPolicy(ConnPolicyOptions{
-					Upstream:   conn.RemoteAddr(),
-					Downstream: conn.LocalAddr(),
-				})
-			}
-			if err != nil {
-				// can't decide the policy, we can't accept the connection.
-				if closeErr := conn.Close(); closeErr != nil {
-					return nil, closeErr
-				}
-
-				if errors.Is(err, ErrInvalidUpstream) {
-					// keep listening for other connections.
-					continue
-				}
-
-				return nil, err
-			}
-			// Handle a connection as a regular one.
-			if proxyHeaderPolicy == SKIP {
-				return conn, nil
-			}
-		}
-
-		opts := []func(*Conn){
-			WithPolicy(proxyHeaderPolicy),
-			ValidateHeader(p.ValidateHeader),
-		}
-		if p.ReadBufferSize > 0 {
-			opts = append(opts, WithBufferSize(p.ReadBufferSize))
-		}
-		newConn := NewConn(conn, opts...)
-
-		// If the ReadHeaderTimeout for the listener is unset, use the default timeout.
-		if p.ReadHeaderTimeout == 0 {
-			p.ReadHeaderTimeout = DefaultReadHeaderTimeout
-		}
-
-		// Set the readHeaderTimeout of the new conn to the value of the listener
-		newConn.readHeaderTimeout = p.ReadHeaderTimeout
-
-		return newConn, nil
-	}
+	// Get the underlying connection.
+	return *new(net.Conn), nil
 }
+
+// can't decide the policy, we can't accept the connection.
+
+// keep listening for other connections.
+
+// Handle a connection as a regular one.
+
+// If the ReadHeaderTimeout for the listener is unset, use the default timeout.
+
+// Set the readHeaderTimeout of the new conn to the value of the listener
 
 // Close closes the underlying listener.
-func (p *Listener) Close() error {
-	return p.Listener.Close()
-}
+func (p *Listener) Close() error { _ = "STUB: not implemented"; return nil }
 
 // Addr returns the underlying listener's network address.
 func (p *Listener) Addr() net.Addr {
-	return p.Listener.Addr()
+	_ = "STUB: not implemented"
+	return *
+
+	// NewConn is used to wrap a net.Conn that may be speaking the PROXY protocol
+	// into a proxyproto.Conn.
+	//
+	// NOTE: NewConn may interfere with previously set ReadDeadline on the provided net.Conn,
+	// because it sets a temporary deadline when detecting and reading the PROXY protocol header.
+	// If you need to enforce a specific ReadDeadline on the connection, be sure to call Conn.SetReadDeadline
+	// again after NewConn returns, to restore your desired deadline.
+	new(net.Addr)
 }
 
-// NewConn is used to wrap a net.Conn that may be speaking the PROXY protocol
-// into a proxyproto.Conn.
-//
-// NOTE: NewConn may interfere with previously set ReadDeadline on the provided net.Conn,
-// because it sets a temporary deadline when detecting and reading the PROXY protocol header.
-// If you need to enforce a specific ReadDeadline on the connection, be sure to call Conn.SetReadDeadline
-// again after NewConn returns, to restore your desired deadline.
-func NewConn(conn net.Conn, opts ...func(*Conn)) *Conn {
-	br := bufio.NewReaderSize(conn, readBufferSize)
-
-	pConn := &Conn{
-		bufReader: br,
-		conn:      conn,
-	}
-
-	for _, opt := range opts {
-		opt(pConn)
-	}
-
-	return pConn
-}
+func NewConn(conn net.Conn, opts ...func(*Conn)) *Conn { _ = "STUB: not implemented"; return nil }
 
 // Read is check for the proxy protocol header when doing
 // the initial scan. If there is an error parsing the header,
 // it is returned and the socket is closed.
 func (p *Conn) Read(b []byte) (int, error) {
+	_ = "STUB: not implemented"
 	// Ensure header processing runs at most once and surface any errors.
-	if err := p.ensureHeaderProcessed(); err != nil {
-		return 0, err
-	}
-
-	// Drain the buffer if it exists and has data.
-	if p.bufReader != nil {
-		if p.bufReader.Buffered() > 0 {
-			n, err := p.bufReader.Read(b)
-
-			// Did we empty the buffer?
-			// Buffering a net.Conn means the buffer doesn't return io.EOF until the connection returns io.EOF.
-			// Therefore, we use Buffered() == 0 to detect if we are done with the buffer.
-			if p.bufReader.Buffered() == 0 {
-				// Garbage collect the buffer.
-				p.bufReader = nil
-			}
-
-			// Return immediately. Do not touch p.conn.
-			// If err is EOF here, it means the connection is actually closed,
-			// so we should return that error to the user anyway.
-			return n, err
-		}
-		// If buffer was empty to begin with (shouldn't happen with the >0 check
-		// but good for safety), clear it.
-		p.bufReader = nil
-	}
-
-	// From now on, read directly from the underlying connection.
-	return p.conn.Read(b)
+	return 0, nil
 }
+
+// Drain the buffer if it exists and has data.
+
+// Did we empty the buffer?
+// Buffering a net.Conn means the buffer doesn't return io.EOF until the connection returns io.EOF.
+// Therefore, we use Buffered() == 0 to detect if we are done with the buffer.
+
+// Garbage collect the buffer.
+
+// Return immediately. Do not touch p.conn.
+// If err is EOF here, it means the connection is actually closed,
+// so we should return that error to the user anyway.
+
+// If buffer was empty to begin with (shouldn't happen with the >0 check
+// but good for safety), clear it.
+
+// From now on, read directly from the underlying connection.
 
 // Write wraps original conn.Write.
 func (p *Conn) Write(b []byte) (int, error) {
+	_ = "STUB: not implemented"
 	// Ensure header processing has completed before writing.
-	if err := p.ensureHeaderProcessed(); err != nil {
-		return 0, err
-	}
-	return p.conn.Write(b)
+	return 0, nil
 }
 
 // Close wraps original conn.Close.
-func (p *Conn) Close() error {
-	return p.conn.Close()
-}
+func (p *Conn) Close() error { _ = "STUB: not implemented"; return nil }
 
 // ProxyHeader returns the proxy protocol header, if any. If an error occurs
 // while reading the proxy header, nil is returned.
 func (p *Conn) ProxyHeader() *Header {
+	_ = "STUB: not implemented"
 	// Ensure header processing runs at most once.
-	_ = p.ensureHeaderProcessed()
-	return p.header
+	return nil
 }
 
 // LocalAddr returns the address of the server if the proxy
@@ -273,13 +180,9 @@ func (p *Conn) ProxyHeader() *Header {
 // from the proxy header even if the proxy header itself is
 // syntactically correct.
 func (p *Conn) LocalAddr() net.Addr {
+	_ = "STUB: not implemented"
 	// Ensure header processing runs at most once.
-	_ = p.ensureHeaderProcessed()
-	if p.header == nil || p.header.Command.IsLocal() || p.readErr != nil {
-		return p.conn.LocalAddr()
-	}
-
-	return p.header.DestinationAddr
+	return *new(net.Addr)
 }
 
 // RemoteAddr returns the address of the client if the proxy
@@ -289,13 +192,9 @@ func (p *Conn) LocalAddr() net.Addr {
 // from the proxy header even if the proxy header itself is
 // syntactically correct.
 func (p *Conn) RemoteAddr() net.Addr {
+	_ = "STUB: not implemented"
 	// Ensure header processing runs at most once.
-	_ = p.ensureHeaderProcessed()
-	if p.header == nil || p.header.Command.IsLocal() || p.readErr != nil {
-		return p.conn.RemoteAddr()
-	}
-
-	return p.header.SourceAddr
+	return *new(net.Addr)
 }
 
 // Raw returns the underlying connection which can be casted to
@@ -303,189 +202,90 @@ func (p *Conn) RemoteAddr() net.Addr {
 //
 // Use this ONLY if you know exactly what you are doing.
 func (p *Conn) Raw() net.Conn {
-	return p.conn
+	_ = "STUB: not implemented"
+
+	// TCPConn returns the underlying TCP connection,
+	// allowing access to specialized functions.
+	//
+	// Use this ONLY if you know exactly what you are doing.
+	return *new(net.Conn)
 }
 
-// TCPConn returns the underlying TCP connection,
-// allowing access to specialized functions.
-//
-// Use this ONLY if you know exactly what you are doing.
-func (p *Conn) TCPConn() (conn *net.TCPConn, ok bool) {
-	conn, ok = p.conn.(*net.TCPConn)
-	return
-}
+func (p *Conn) TCPConn() (conn *net.TCPConn, ok bool) { _ = "STUB: not implemented"; return nil, false }
 
 // UnixConn returns the underlying Unix socket connection,
 // allowing access to specialized functions.
 //
 // Use this ONLY if you know exactly what you are doing.
 func (p *Conn) UnixConn() (conn *net.UnixConn, ok bool) {
-	conn, ok = p.conn.(*net.UnixConn)
-	return
+	_ = "STUB: not implemented"
+	return nil, false
 }
 
 // UDPConn returns the underlying UDP connection,
 // allowing access to specialized functions.
 //
 // Use this ONLY if you know exactly what you are doing.
-func (p *Conn) UDPConn() (conn *net.UDPConn, ok bool) {
-	conn, ok = p.conn.(*net.UDPConn)
-	return
-}
+func (p *Conn) UDPConn() (conn *net.UDPConn, ok bool) { _ = "STUB: not implemented"; return nil, false }
 
 // SetDeadline wraps original conn.SetDeadline.
-func (p *Conn) SetDeadline(t time.Time) error {
-	p.readDeadline.Store(t)
-	return p.conn.SetDeadline(t)
-}
+func (p *Conn) SetDeadline(t time.Time) error { _ = "STUB: not implemented"; return nil }
 
 // SetReadDeadline wraps original conn.SetReadDeadline.
 func (p *Conn) SetReadDeadline(t time.Time) error {
+	_ = "STUB: not implemented"
 	// Set a local var that tells us the desired deadline. This is
 	// needed in order to reset the read deadline to the one that is
 	// desired by the user, rather than an empty deadline.
-	p.readDeadline.Store(t)
-	return p.conn.SetReadDeadline(t)
-}
-
-// SetWriteDeadline wraps original conn.SetWriteDeadline.
-func (p *Conn) SetWriteDeadline(t time.Time) error {
-	return p.conn.SetWriteDeadline(t)
-}
-
-// readHeader reads the proxy protocol header from the connection.
-func (p *Conn) readHeader() error {
-	// If the connection's readHeaderTimeout is more than 0,
-	// apply a temporary deadline without extending a user-configured
-	// deadline. If the user has no deadline, we use now + timeout.
-	if p.readHeaderTimeout > 0 {
-		var (
-			storedDeadline time.Time
-			hasDeadline    bool
-		)
-		if t := p.readDeadline.Load(); t != nil {
-			storedDeadline = t.(time.Time)
-			hasDeadline = !storedDeadline.IsZero()
-		}
-
-		headerDeadline := time.Now().Add(p.readHeaderTimeout)
-		if hasDeadline && storedDeadline.Before(headerDeadline) {
-			// Clamp to the user's earlier deadline to avoid extending it.
-			headerDeadline = storedDeadline
-		}
-
-		if err := p.conn.SetReadDeadline(headerDeadline); err != nil {
-			return err
-		}
-	}
-
-	header, err := Read(p.bufReader)
-
-	// If the connection's readHeaderTimeout is more than 0, undo the change to the
-	// deadline that we made above. Because we retain the readDeadline as part of our
-	// SetReadDeadline override, we can restore the user's deadline (if any).
-	// Therefore, we check whether the error is a net.Timeout and if it is, we decide
-	// the proxy proto does not exist and set the error accordingly.
-	if p.readHeaderTimeout > 0 {
-		t := p.readDeadline.Load()
-		if t == nil {
-			t = time.Time{}
-		}
-		if err := p.conn.SetReadDeadline(t.(time.Time)); err != nil {
-			return err
-		}
-		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-			err = ErrNoProxyProtocol
-		}
-	}
-
-	// For the purpose of this wrapper shamefully stolen from armon/go-proxyproto
-	// let's act as if there was no error when PROXY protocol is not present.
-	if err == ErrNoProxyProtocol {
-		// but not if it is required that the connection has one
-		if p.ProxyHeaderPolicy == REQUIRE {
-			return err
-		}
-
-		return nil
-	}
-
-	// proxy protocol header was found
-	if err == nil && header != nil {
-		switch p.ProxyHeaderPolicy {
-		case REJECT:
-			// this connection is not allowed to send one
-			return ErrSuperfluousProxyHeader
-		case USE, REQUIRE:
-			if p.Validate != nil {
-				err = p.Validate(header)
-				if err != nil {
-					return err
-				}
-			}
-
-			p.header = header
-		}
-	}
-
-	return err
-}
-
-// ensureHeaderProcessed runs header processing once.
-func (p *Conn) ensureHeaderProcessed() error {
-	p.once.Do(func() {
-		p.readErr = p.readHeader()
-	})
-	if p.readErr != nil {
-		return p.readErr
-	}
 	return nil
 }
 
+// SetWriteDeadline wraps original conn.SetWriteDeadline.
+func (p *Conn) SetWriteDeadline(t time.Time) error { _ = "STUB: not implemented"; return nil }
+
+// readHeader reads the proxy protocol header from the connection.
+func (p *Conn) readHeader() error {
+	_ = "STUB: not implemented"
+	// If the connection's readHeaderTimeout is more than 0,
+	// apply a temporary deadline without extending a user-configured
+	// deadline. If the user has no deadline, we use now + timeout.
+	return nil
+}
+
+// Clamp to the user's earlier deadline to avoid extending it.
+
+// If the connection's readHeaderTimeout is more than 0, undo the change to the
+// deadline that we made above. Because we retain the readDeadline as part of our
+// SetReadDeadline override, we can restore the user's deadline (if any).
+// Therefore, we check whether the error is a net.Timeout and if it is, we decide
+// the proxy proto does not exist and set the error accordingly.
+
+// For the purpose of this wrapper shamefully stolen from armon/go-proxyproto
+// let's act as if there was no error when PROXY protocol is not present.
+
+// but not if it is required that the connection has one
+
+// proxy protocol header was found
+
+// this connection is not allowed to send one
+
+// ensureHeaderProcessed runs header processing once.
+func (p *Conn) ensureHeaderProcessed() error { _ = "STUB: not implemented"; return nil }
+
 // ReadFrom implements the io.ReaderFrom ReadFrom method.
 func (p *Conn) ReadFrom(r io.Reader) (int64, error) {
+	_ = "STUB: not implemented"
 	// Ensure header processing has completed before reading/writing.
-	if err := p.ensureHeaderProcessed(); err != nil {
-		return 0, err
-	}
-	if rf, ok := p.conn.(io.ReaderFrom); ok {
-		return rf.ReadFrom(r)
-	}
-	return io.Copy(p.conn, r)
+	return 0, nil
 }
 
 // WriteTo implements io.WriterTo.
 func (p *Conn) WriteTo(w io.Writer) (int64, error) {
+	_ = "STUB: not implemented"
 	// Ensure header processing has completed before reading/writing.
-	if err := p.ensureHeaderProcessed(); err != nil {
-		return 0, err
-	}
-
-	// If the buffer has been drained (or cleared), copy directly from conn.
-	if p.bufReader == nil {
-		return io.Copy(w, p.conn)
-	}
-
-	b := make([]byte, p.bufReader.Buffered())
-	if _, err := p.bufReader.Read(b); err != nil {
-		return 0, err // this should never happen as we read buffered data.
-	}
-
-	var n int64
-	{
-		nn, err := w.Write(b)
-		n += int64(nn)
-		if err != nil {
-			return n, err
-		}
-	}
-	{
-		nn, err := io.Copy(w, p.conn)
-		n += nn
-		if err != nil {
-			return n, err
-		}
-	}
-
-	return n, nil
+	return 0, nil
 }
+
+// If the buffer has been drained (or cleared), copy directly from conn.
+
+// this should never happen as we read buffered data.
